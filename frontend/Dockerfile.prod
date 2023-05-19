@@ -1,0 +1,53 @@
+#The objective of Dockerfile.prod is to create a web server that can render and serve this .jsx optimized frontend files.
+# npm build can recompile the code but we also need to create a server. npm start has a server but not optimized for production.
+FROM node:14-alpine as build
+# ...as build see comments at bottom below....we will not need it in the final prod frontend container
+# only development uses the server node js (3000).  We will use nginx in production which is much more efficent.
+
+WORKDIR /app
+
+COPY package.json .
+
+RUN npm install
+
+COPY . .
+
+#EXPOSE 3000
+# will will not expose any port because the server has not started yet
+
+#CMD [ "npm", "start" ]
+#CMD ["npm", "run", "build"]
+# this command will recompile and render the .jsx code.
+# we need npm run build and not just npm build.  Npm start can be executed without "run" but build requires it.
+
+# we need a server to serve them. We need to do a multistage docker build
+#multiple stages will be used with temp containers.
+# at this time we have finished code
+#instead of CMD, use RUN
+RUN npm run build
+# we do not need node after the code is rendered.  We can switch to a new base
+
+#stage 2:  (FROM will always create a new stage irrespective of if a different image is used)
+# this stage will build our production web server to serve the recompiled source code to the browser
+# so that it can run it in the browser.
+FROM nginx:stable-alpine
+
+# we need the optimized files from above
+# use the FROM ... as build
+# then stage2 COPY from the build
+
+COPY --from=build /app/build /usr/share/nginx/html
+# copy  the contents from stage 1 (--from build) into the new stage. We only need 
+# COPY refers to the container
+#note: that the "npm run build" creates a build directory /app/build
+# we want to take all of this /app/build and put into the diretory above in nginx.
+# this has all of our recompiled source code
+# this /usr/share/nginx/html is the default folder from where nginx serves files. This is exactly what Grider did in production.
+# the final container contains this above. The first one will be discarded.
+
+EXPOSE 80
+#this is default port of nginx
+# note that unlike dev build, we will have a public loadbalancer ip address to hit this port.
+
+CMD ["nginx", "-g", "daemon off;" ]
+# this is the command execution to start nginx once it is instantiated on AWS ECS

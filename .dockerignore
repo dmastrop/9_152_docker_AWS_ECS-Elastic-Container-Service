@@ -1,0 +1,4 @@
+node_modules
+# note Dockerfile itself is not required by container. Used by local or script (github or travis), not by container itself, during build process.
+Dockerfile
+.git

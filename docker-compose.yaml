@@ -1,0 +1,43 @@
+# note this file initially missing frontend due to 9_143 9_154 and 9_150 backend to mongodb training
+# need to add back in the frontend similar to project 6_90
+version: '3.8'
+services:
+  #mongodb:
+  #  image: 'mongo'
+  #  volumes:
+  #    - data:/data/db
+  #  env_file:
+  #    - ./env/mongo.env
+  # mongodb service is completely commented out because we are using atlas mongodb in this workspace project.
+  backend:
+    build: ./backend
+    ports:
+  #   - '80:80'
+      - '8005:80'
+      # use port 8005 of Section 6_90 configuration localhost to avoid conflicts with 80, 8000,8006, etc. on localhost
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    env_file:
+      - ./env/backend.env
+#    depends_on:
+#     - mongodb
+# there is no local mongodb with altlas so the dependency can be removed.
+
+# reinsert the frontend that was removed in training files
+# refer to project 6_90 as well
+
+  frontend:
+    build: ./frontend
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./frontend/src:/app/src
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+#volumes:
+#  data:
+# we don't need this with mongodb atlas because persistent storage is on cloud now.
